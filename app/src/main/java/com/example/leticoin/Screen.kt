@@ -2,6 +2,7 @@ package com.example.leticoin
 
 import android.annotation.SuppressLint
 import android.app.Application
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -54,8 +55,13 @@ import com.example.leticoin.accounts.Account
 import androidx.compose.runtime.*
 import androidx.compose.material.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.core.content.ContentProviderCompat.requireContext
 import com.example.leticoin.achievements.Achievement
+import kotlinx.coroutines.launch
 
 class Screen {
     companion object {
@@ -115,14 +121,31 @@ class Screen {
             }
         }
 
-        @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+        @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "RememberReturnType")
         @OptIn(ExperimentalMaterial3Api::class)
         @Composable
         fun RegistrationScreen(
             navController: NavHostController,
             viewModel: MainViewModel
         ) { // экран регистрации
+
+            var stateRadioButton by remember { mutableStateOf(true) }
+            var isTeacherSelected by remember { mutableStateOf(true) }
+            var textStateUsername by remember { mutableStateOf(TextFieldValue()) }
+            var textStateName by remember { mutableStateOf(TextFieldValue()) }
+            var textStatePassword by remember { mutableStateOf(TextFieldValue()) }
+            var textStateReenterPassword by remember { mutableStateOf(TextFieldValue()) }
+            var snackbarHostState = remember { SnackbarHostState() }
+
+            var scope = rememberCoroutineScope()
+
+            var username by remember { mutableStateOf("") }
+            var password by remember { mutableStateOf("") }
+            var reenteredPassword by remember { mutableStateOf("") }
+            var name by remember { mutableStateOf("") }
+
             Scaffold(
+                snackbarHost = { SnackbarHost(snackbarHostState) },
                 topBar = @Composable {
                     TopAppBar(
                         colors = TopAppBarDefaults.topAppBarColors(
@@ -157,12 +180,6 @@ class Screen {
                 }
             ) {
 
-                var stateRadioButton by remember { mutableStateOf(true) }
-                var isTeacherSelected by remember { mutableStateOf(true) }
-                val textState = remember { mutableStateOf(TextFieldValue()) }
-                var username = ""
-                var password = ""
-                var name = ""
 
                 Column(
                     modifier = Modifier
@@ -210,9 +227,10 @@ class Screen {
                     Spacer(modifier = Modifier.height(10.dp))
 
                     TextField(
-                        value = textState.value, onValueChange = { newValue ->
-                            textState.value = newValue
-                            username = textState.value.toString()
+                        value = textStateUsername,
+                        onValueChange = {
+                            textStateUsername = it
+                            username = it.text.trim()
                         },
                         label = {
                             Text(
@@ -225,9 +243,10 @@ class Screen {
                     Spacer(modifier = Modifier.height(20.dp))
 
                     TextField(
-                        value = textState.value, onValueChange = { newValue ->
-                            textState.value = newValue
-                            name = textState.value.toString()
+                        value = textStateName,
+                        onValueChange = {
+                            textStateName = it
+                            name = it.text.trim()
                         },
                         label = {
                             Text(
@@ -240,9 +259,10 @@ class Screen {
                     Spacer(modifier = Modifier.height(20.dp))
 
                     TextField(
-                        value = textState.value, onValueChange = { newValue ->
-                            textState.value = newValue
-                            password = textState.value.toString()
+                        value = textStatePassword,
+                        onValueChange = {
+                            textStatePassword = it
+                            password = it.text.trim()
                         },
                         label = {
                             Text(
@@ -255,8 +275,10 @@ class Screen {
                     Spacer(modifier = Modifier.height(20.dp))
 
                     TextField(
-                        value = textState.value, onValueChange = { newValue ->
-                            textState.value = newValue
+                        value = textStateReenterPassword,
+                        onValueChange = {
+                            textStateReenterPassword = it
+                            reenteredPassword = it.text.trim()
                         },
                         label = {
                             Text(
@@ -267,14 +289,45 @@ class Screen {
                         modifier = Modifier.padding(8.dp)
                     )
                     Spacer(modifier = Modifier.height(20.dp))
+                    Log.d("Doing","Мы создали экран регистрации")
                     Button(
                         onClick = {
-                            viewModel.saveAccount(
-                                Account(
-                                    isTeacherSelected, username, password, name
-                                )
-                            )
-                            navController.navigate("greetingScreen")
+                            if (username.equals("") || name.equals("")
+                                || password.equals("") || reenteredPassword.equals("")) {
+                                scope.launch {
+                                    val result = snackbarHostState.showSnackbar(
+                                        "Заполните все поля",
+                                        withDismissAction = true,
+                                        duration = SnackbarDuration.Short)
+                                }
+                            }
+                            else{
+                                if (reenteredPassword != password)
+                                    scope.launch {
+                                        val result = snackbarHostState.showSnackbar(
+                                            "Пароли не совпадают",
+                                            withDismissAction = true,
+                                            duration = SnackbarDuration.Short)
+                                    }
+
+                                else {
+                                    Log.d("Doing","Сохраняем аккаунт")
+                                    Log.d("Doing", "${password}")
+                                    Log.d("Doing", "$username")
+                                    Log.d("Doing", "$name")
+                                    Log.d("Doing", "${isTeacherSelected}")
+                                    viewModel.saveAccount(
+                                        Account(
+                                            isTeacherSelected, username, password, name
+                                        )
+                                    )
+                                    navController.navigate("greetingScreen") {
+                                        popUpTo("greetingScreen") {
+                                            inclusive = true
+                                        }
+                                    }
+                                }
+                            }
                         },
                         modifier = Modifier.align(Alignment.CenterHorizontally)
                     ) {
@@ -284,7 +337,6 @@ class Screen {
                             style = TextStyle(fontSize = 24.sp)
                         )
                     }
-
                 }
             }
 
@@ -300,7 +352,14 @@ class Screen {
             mainActivity: MainActivity
         ) { // экран авторизации
 
+            val textStateUsername = remember { mutableStateOf(TextFieldValue()) }
+            val textStatePassword = remember { mutableStateOf(TextFieldValue()) }
+            val snackbarHostState = remember { SnackbarHostState() }
+            var username = ""
+            var password = ""
+            val scope = rememberCoroutineScope()
             Scaffold(
+                snackbarHost = { SnackbarHost(snackbarHostState) },
                 topBar = @Composable {
                     TopAppBar(
                         colors = TopAppBarDefaults.topAppBarColors(
@@ -335,9 +394,6 @@ class Screen {
                 }
             ) {
 
-                val textState = remember { mutableStateOf(TextFieldValue()) }
-                var username = ""
-                var password = ""
                 Column(
                     modifier = Modifier
                         .padding(horizontal = 16.dp, vertical = 80.dp)
@@ -346,9 +402,9 @@ class Screen {
                 ) {
 
                     TextField(
-                        value = textState.value, onValueChange = { newValue ->
-                            textState.value = newValue
-                            username = textState.value.toString()
+                        value = textStateUsername.value, onValueChange = { newValue ->
+                            textStateUsername.value = newValue
+                            username = textStateUsername.value.toString()
                         },
                         label = {
                             Text(
@@ -361,9 +417,9 @@ class Screen {
                     Spacer(modifier = Modifier.height(20.dp))
 
                     TextField(
-                        value = textState.value, onValueChange = { newValue ->
-                            textState.value = newValue
-                            password = textState.value.toString()
+                        value = textStatePassword.value, onValueChange = { newValue ->
+                            textStatePassword.value = newValue
+                            password = textStatePassword.value.toString()
                         },
                         label = {
                             Text(
@@ -380,19 +436,21 @@ class Screen {
                         onClick = {
                             var account = viewModel.findAccount(username)
                             if (account == null) {
-                                Toast.makeText(
-                                    mainActivity.applicationContext,
-                                    "Введен некорректный username",
-                                    Toast.LENGTH_LONG
-                                ).show()
+                                scope.launch {
+                                    val result = snackbarHostState.showSnackbar(
+                                        "Введен некорректный username",
+                                        withDismissAction = true,
+                                        duration = SnackbarDuration.Short)
+                                }
                             }
                             else{
                                 if (account.password!=password)
-                                    Toast.makeText(
-                                        mainActivity.applicationContext,
-                                        "Введен некорректный пароль",
-                                        Toast.LENGTH_LONG
-                                    ).show()
+                                    scope.launch {
+                                        val result = snackbarHostState.showSnackbar(
+                                            "Введен некорректный пароль",
+                                            withDismissAction = true,
+                                            duration = SnackbarDuration.Short)
+                                    }
                                 else {
                                     if (account.id == true)
                                         navController.navigate("teacherScreen")
@@ -413,18 +471,18 @@ class Screen {
 
         }
 
-       /* @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+        @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
         @OptIn(ExperimentalMaterial3Api::class)
         @Composable
         fun AchievementScreen(
             navController: NavHostController,
-            viewModel: MainViewModel, mainActivity: MainActivity
+            viewModel: MainViewModel
         ) {//AchievementScreen
             var sum: Int = 0
             var achievements by remember { mutableStateOf<List<Achievement>>(emptyList()) }
-            viewModel.getAchievements().observe(mainActivity) { newAchievements ->
-                achievements = newAchievements
-            }
+//            viewModel.getAchievements().observe(mainActivity) { newAchievements ->
+//                achievements = newAchievements
+//            }
             Scaffold(
                 topBar = @Composable {
                     TopAppBar(
@@ -450,7 +508,6 @@ class Screen {
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
                         .padding(horizontal = 16.dp, vertical = 80.dp)
-
                 ) {
                     itemsIndexed(
                         achievements
@@ -514,7 +571,7 @@ class Screen {
                     }
                 }
             }
-        }*/
+        }
 
 
         @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -590,7 +647,6 @@ class Screen {
                             textAlign = TextAlign.Center, style = TextStyle(fontSize = 24.sp)
                         )
                     }
-
                 }
             }
         }
