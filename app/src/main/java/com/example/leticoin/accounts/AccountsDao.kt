@@ -1,11 +1,9 @@
 package com.example.leticoin.accounts
 
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
-import com.example.leticoin.achievements.Achievement
 
 @Dao
 interface AccountsDao {
@@ -13,10 +11,9 @@ interface AccountsDao {
     fun getAccounts(): LiveData<List<Account>>
 
     @Insert
-    fun add(account: Account){
-        Log.d("Doing", "Мы в AccountsDao методе add")}
+    fun add(account: Account)
 
     @Query("SELECT * FROM accounts WHERE username LIKE :searchQuery")
-    fun searchAccount(searchQuery: String): LiveData<Account>
+    fun searchAccount(searchQuery: String): Account?
 
 }

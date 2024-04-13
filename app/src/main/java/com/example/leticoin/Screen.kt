@@ -1,9 +1,7 @@
 package com.example.leticoin
 
 import android.annotation.SuppressLint
-import android.app.Application
 import android.util.Log
-import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -20,6 +18,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
@@ -51,16 +50,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import com.example.leticoin.accounts.Account
 import androidx.compose.runtime.*
-import androidx.compose.material.*
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.core.content.ContentProviderCompat.requireContext
+import androidx.compose.ui.text.input.KeyboardType
+import com.example.leticoin.accounts.Account
 import com.example.leticoin.achievements.Achievement
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class Screen {
@@ -125,8 +123,7 @@ class Screen {
         @OptIn(ExperimentalMaterial3Api::class)
         @Composable
         fun RegistrationScreen(
-            navController: NavHostController,
-            viewModel: MainViewModel
+            navController: NavHostController, viewModel: MainViewModel
         ) { // экран регистрации
 
             var stateRadioButton by remember { mutableStateOf(true) }
@@ -138,6 +135,7 @@ class Screen {
             var snackbarHostState = remember { SnackbarHostState() }
 
             var scope = rememberCoroutineScope()
+
 
             var username by remember { mutableStateOf("") }
             var password by remember { mutableStateOf("") }
@@ -238,6 +236,7 @@ class Screen {
                                 color = Color.Black
                             )
                         },
+                        keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Text),
                         modifier = Modifier.padding(8.dp)
                     )
                     Spacer(modifier = Modifier.height(20.dp))
@@ -311,16 +310,14 @@ class Screen {
                                     }
 
                                 else {
-                                    Log.d("Doing","Сохраняем аккаунт")
-                                    Log.d("Doing", "${password}")
-                                    Log.d("Doing", "$username")
-                                    Log.d("Doing", "$name")
-                                    Log.d("Doing", "${isTeacherSelected}")
-                                    viewModel.saveAccount(
-                                        Account(
-                                            isTeacherSelected, username, password, name
+                                    CoroutineScope(Dispatchers.IO).launch {
+                                        viewModel.saveAccount(
+                                            Account(
+                                                isTeacherSelected, username, password, name
+                                            )
                                         )
-                                    )
+                                    }
+
                                     navController.navigate("greetingScreen") {
                                         popUpTo("greetingScreen") {
                                             inclusive = true
@@ -348,15 +345,14 @@ class Screen {
         @Composable
         fun AuthorizationScreenGreeting(
             navController: NavHostController,
-            viewModel: MainViewModel,
-            mainActivity: MainActivity
+            viewModel: MainViewModel
         ) { // экран авторизации
 
-            val textStateUsername = remember { mutableStateOf(TextFieldValue()) }
-            val textStatePassword = remember { mutableStateOf(TextFieldValue()) }
+            var textStateUsername by remember { mutableStateOf(TextFieldValue()) }
+            var textStatePassword by remember { mutableStateOf(TextFieldValue()) }
+            var username by remember { mutableStateOf("") }
+            var password by remember { mutableStateOf("") }
             val snackbarHostState = remember { SnackbarHostState() }
-            var username = ""
-            var password = ""
             val scope = rememberCoroutineScope()
             Scaffold(
                 snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -402,9 +398,10 @@ class Screen {
                 ) {
 
                     TextField(
-                        value = textStateUsername.value, onValueChange = { newValue ->
-                            textStateUsername.value = newValue
-                            username = textStateUsername.value.toString()
+                        value = textStateUsername,
+                        onValueChange = {
+                            textStateUsername = it
+                            username = it.text.trim()
                         },
                         label = {
                             Text(
@@ -417,9 +414,10 @@ class Screen {
                     Spacer(modifier = Modifier.height(20.dp))
 
                     TextField(
-                        value = textStatePassword.value, onValueChange = { newValue ->
-                            textStatePassword.value = newValue
-                            password = textStatePassword.value.toString()
+                        value = textStatePassword,
+                        onValueChange = {
+                            textStatePassword = it
+                            password = it.text.trim()
                         },
                         label = {
                             Text(
@@ -434,27 +432,57 @@ class Screen {
 
                     Button(
                         onClick = {
-                            var account = viewModel.findAccount(username)
-                            if (account == null) {
-                                scope.launch {
-                                    val result = snackbarHostState.showSnackbar(
-                                        "Введен некорректный username",
-                                        withDismissAction = true,
-                                        duration = SnackbarDuration.Short)
-                                }
-                            }
-                            else{
-                                if (account.password!=password)
+                            var canMove = 3
+                            CoroutineScope(Dispatchers.IO).launch {
+                                var account = viewModel.findAccount(username)
+                                if (account!=null){
+                                    Log.d("Doing","${account.name}")
+                                    Log.d("Doing","${account.username}")
+                                    Log.d("Doing","${account.password}")
+                                    Log.d("Doing","${account.teacher}")}
+                                else Log.d("Doing","Account = NULL")
+                                if (account == null) {
                                     scope.launch {
                                         val result = snackbarHostState.showSnackbar(
-                                            "Введен некорректный пароль",
+                                            "Введен некорректный username",
                                             withDismissAction = true,
                                             duration = SnackbarDuration.Short)
                                     }
-                                else {
-                                    if (account.id == true)
-                                        navController.navigate("teacherScreen")
-                                    else navController.navigate("achievementScreen")
+                                }
+                                else{
+                                    if (account.password!=password)
+                                        scope.launch {
+                                            val result = snackbarHostState.showSnackbar(
+                                                "Введен некорректный пароль",
+                                                withDismissAction = true,
+                                                duration = SnackbarDuration.Short)
+                                        }
+                                    else {
+                                        if (account.teacher == true)
+                                            canMove = 0
+                                        else
+                                            canMove = 1
+
+                                    }
+                                }
+                            }
+                            when (canMove) {
+                                0 -> {
+                                    navController.navigate("teacherScreen") {
+                                        popUpTo("teacherScreen") {
+                                            inclusive = true
+                                        }
+                                    }
+                                }
+                                1 -> {
+                                    navController.navigate("achievementScreen") {
+                                        popUpTo("achievementScreen") {
+                                            inclusive = true
+                                        }
+                                    }
+                                }
+                                else -> {
+                                    Log.d("Doing","ошибка в аккаунте")
                                 }
                             }
                         },
@@ -577,7 +605,7 @@ class Screen {
         @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
         @OptIn(ExperimentalMaterial3Api::class)
         @Composable
-        fun AddAchievmentScreen(navController: NavHostController, viewModel: MainViewModel) {//
+        fun AddAchievmentScreen(navController: NavHostController,appDatabase: AppDatabase) {//
             Scaffold(
                 topBar = @Composable {
                     TopAppBar(

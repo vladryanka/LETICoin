@@ -1,18 +1,18 @@
 package com.example.leticoin
+
 import android.app.Application
 import android.util.Log
-import androidx.lifecycle.AndroidViewModel;
-import androidx.lifecycle.LiveData
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
-import com.example.leticoin.accounts.Account
+import androidx.lifecycle.viewModelScope
 import com.example.leticoin.accounts.AccountsDao
+import com.example.leticoin.accounts.Account
+import com.example.leticoin.achievements.AchievementsDao
 import com.example.leticoin.achievements.Achievement
 import kotlinx.coroutines.Dispatchers
-import androidx.lifecycle.viewModelScope
-import com.example.leticoin.achievements.AchievementsDao
 import kotlinx.coroutines.launch
-
+import androidx.lifecycle.LiveData
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val accountDao: AccountsDao = AppDatabase.getInstance(application).accountsDao()
@@ -27,13 +27,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         return appDatabase.accountsDao().getAccounts()
     }
     fun findAccount(username:String): Account?{
-        val accountLiveData = accountDao.searchAccount(username)
-        var account: Account? = null
-        val observer = Observer<Account> { accountValue ->
-            account = accountValue
-        }
-        accountLiveData.observeForever(observer)
-        accountLiveData.removeObserver(observer)
+        val account = accountDao.searchAccount(username)
+
         return account
     }
 
