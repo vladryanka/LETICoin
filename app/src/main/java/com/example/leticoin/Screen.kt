@@ -60,6 +60,7 @@ import com.example.leticoin.achievements.Achievement
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class Screen {
     companion object {
@@ -432,57 +433,46 @@ class Screen {
 
                     Button(
                         onClick = {
-                            var canMove = 3
                             CoroutineScope(Dispatchers.IO).launch {
                                 var account = viewModel.findAccount(username)
-                                if (account!=null){
-                                    Log.d("Doing","${account.name}")
-                                    Log.d("Doing","${account.username}")
-                                    Log.d("Doing","${account.password}")
-                                    Log.d("Doing","${account.teacher}")}
-                                else Log.d("Doing","Account = NULL")
+
                                 if (account == null) {
-                                    scope.launch {
+                                    withContext(Dispatchers.Main) {
                                         val result = snackbarHostState.showSnackbar(
                                             "Введен некорректный username",
                                             withDismissAction = true,
-                                            duration = SnackbarDuration.Short)
+                                            duration = SnackbarDuration.Short
+                                        )
                                     }
-                                }
-                                else{
-                                    if (account.password!=password)
-                                        scope.launch {
+                                } else {
+                                    if (account.password != password) {
+                                        withContext(Dispatchers.Main) {
                                             val result = snackbarHostState.showSnackbar(
                                                 "Введен некорректный пароль",
                                                 withDismissAction = true,
-                                                duration = SnackbarDuration.Short)
+                                                duration = SnackbarDuration.Short
+                                            )
                                         }
-                                    else {
+                                    } else {
                                         if (account.teacher == true)
-                                            canMove = 0
+                                            withContext(Dispatchers.Main) {
+                                                navController.navigate("teacherScreen") {
+                                                    Log.d("Doing", "teacherScreen")
+                                                    popUpTo("teacherScreen") {
+                                                        inclusive = true
+                                                    }
+                                                }
+                                            }
                                         else
-                                            canMove = 1
-
+                                            withContext(Dispatchers.Main) {
+                                                navController.navigate("achievementScreen") {
+                                                    Log.d("Doing", "achievementScreen")
+                                                    popUpTo("achievementScreen") {
+                                                        inclusive = true
+                                                    }
+                                                }
+                                            }
                                     }
-                                }
-                            }
-                            when (canMove) {
-                                0 -> {
-                                    navController.navigate("teacherScreen") {
-                                        popUpTo("teacherScreen") {
-                                            inclusive = true
-                                        }
-                                    }
-                                }
-                                1 -> {
-                                    navController.navigate("achievementScreen") {
-                                        popUpTo("achievementScreen") {
-                                            inclusive = true
-                                        }
-                                    }
-                                }
-                                else -> {
-                                    Log.d("Doing","ошибка в аккаунте")
                                 }
                             }
                         },
@@ -504,13 +494,10 @@ class Screen {
         @Composable
         fun AchievementScreen(
             navController: NavHostController,
-            viewModel: MainViewModel
+            viewModel: MainViewModel,
+            achievementsList:List<Achievement>
         ) {//AchievementScreen
             var sum: Int = 0
-            var achievements by remember { mutableStateOf<List<Achievement>>(emptyList()) }
-//            viewModel.getAchievements().observe(mainActivity) { newAchievements ->
-//                achievements = newAchievements
-//            }
             Scaffold(
                 topBar = @Composable {
                     TopAppBar(
@@ -538,7 +525,7 @@ class Screen {
                         .padding(horizontal = 16.dp, vertical = 80.dp)
                 ) {
                     itemsIndexed(
-                        achievements
+                        achievementsList
                     ) { _, item ->
                         sum += item.priority
                         Card(
