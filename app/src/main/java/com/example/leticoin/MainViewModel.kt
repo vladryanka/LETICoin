@@ -16,38 +16,40 @@ import androidx.lifecycle.LiveData
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val accountDao: AccountsDao = AppDatabase.getInstance(application).accountsDao()
-    private val achievementDao: AchievementsDao = AppDatabase.getInstance(application).achievementsDao()
-    private val shouldCloseScreen: MutableLiveData<Boolean> = MutableLiveData()
+    private val achievementDao: AchievementsDao =
+        AppDatabase.getInstance(application).achievementsDao()
     private val appDatabase: AppDatabase = AppDatabase.getInstance(application)
 
     fun getAchievements(): LiveData<List<Achievement>> {
         return appDatabase.achievementsDao().getAchievements()
     }
+
     fun getAccounts(): LiveData<List<Account>> {
         return appDatabase.accountsDao().getAccounts()
     }
-    fun findAccount(username:String): Account?{
+
+    fun findAccount(username: String): Account? {
         val account = accountDao.searchAccount(username)
 
         return account
     }
 
-    fun getShouldCloseScreen(): LiveData<Boolean> {
-        return shouldCloseScreen
+    fun findAchievement(username: String): Achievement? {
+        val achievement = achievementDao.searchAchievement(username)
+        return achievement
     }
 
+
     fun saveAchievement(achievement: Achievement) {
-        viewModelScope.launch(Dispatchers.IO) {
-            achievementDao.add(achievement)
-            shouldCloseScreen.postValue(true)
-        }
+        Log.d("Doing", "Пришли в saveAchievement")
+        achievementDao.add(achievement)
     }
+
     fun saveAccount(account: Account) {
-        //viewModelScope.launch(Dispatchers.IO) {
-            Log.d("Doing","Пришли в saveAccount")
-            accountDao.add(account)
-       // }
+        Log.d("Doing", "Пришли в saveAccount")
+        accountDao.add(account)
     }
+
     fun remove(achievement: Achievement) { // удаление достижения
         viewModelScope.launch(Dispatchers.IO) {
             appDatabase.achievementsDao().remove(achievement.id)

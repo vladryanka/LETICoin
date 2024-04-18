@@ -2,6 +2,7 @@
     <string name="app_name">LETICoin</string>
     <string name="greeting">Добро пожаловать!</string>
     <string name="enter">Войти</string>
+    <string name="find">Найти</string>
     <string name="registers">Регистрация</string>
     <string name="back">Назад</string>
     <string name="teacher">Преподаватель</string>
@@ -17,5 +18,10 @@
     <string name="achievements">Достижения</string>
     <string name="add_achievement">Добавление достижения</string>
     <string name="enter_the_achievement">Введите название достижения</string>
+    <string name="enter_the_student">Введите имя студента</string>
     <string name="yourSum">Сумма: %s баллов</string>
+    <string name="olympics">Олимпиада</string>
+    <string name="article">Статья</string>
+    <string name="conference">Конференция</string>
+
 </resources>

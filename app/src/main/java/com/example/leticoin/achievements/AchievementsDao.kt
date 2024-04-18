@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
+import com.example.leticoin.accounts.Account
 
 @Dao
 interface AchievementsDao {
@@ -15,4 +16,7 @@ interface AchievementsDao {
 
     @Query("DELETE FROM achievements WHERE id = :id")
     fun remove(id: Int)
+
+    @Query("SELECT * FROM achievements WHERE username LIKE :searchQuery")
+    fun searchAchievement(searchQuery: String): Achievement?
 }
