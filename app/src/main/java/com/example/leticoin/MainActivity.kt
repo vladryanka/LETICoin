@@ -78,6 +78,12 @@ class MainActivity : ComponentActivity() {
                         accountsList,
                         viewModel)
                     }
+                    composable("writeOffAchievementsScreen") {
+                        viewModel.getAchievements().observe(owner, Observer { achievements ->
+                            achievementsList = achievements
+                        })
+                    Screen.WriteOffAchievementsScreen(achievementsList)
+                    }
                 }
                 //MainScreen(navController, viewModel,achievementsList,accountsList )
             }

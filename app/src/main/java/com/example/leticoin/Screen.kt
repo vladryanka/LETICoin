@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -77,13 +78,16 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.Checkbox
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextOverflow
 
 class Screen {
 
+    @OptIn(ExperimentalMaterial3Api::class)
     companion object {
         private var currentUsername = ""
+        private lateinit var student: Account
 
         @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
         @OptIn(ExperimentalMaterial3Api::class)
@@ -610,27 +614,26 @@ class Screen {
                     ) { _, item ->
                         Row {
                             Card(modifier = Modifier.weight(1f)) {
-
-                                Row(
+                                Box(
                                     modifier = Modifier
-                                        .height(80.dp)
-                                        .padding(start = 15.dp, end = 15.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
+                                        .padding(15.dp)
+                                        .fillMaxSize(),
+                                    contentAlignment = Alignment.CenterStart
                                 ) {
                                     Text(
                                         text = item.text,
-                                        modifier = Modifier.padding(horizontal = 16.dp),
+                                        modifier = Modifier
+                                            .align(Alignment.CenterStart),
                                         fontSize = 18.sp,
                                         textAlign = TextAlign.Start,
-                                        maxLines = 1, // Ограничиваем количество строк
+                                        softWrap = true,
                                         overflow = TextOverflow.Ellipsis
                                     )
-                                    Spacer(modifier = Modifier.weight(1f))
-                                    Spacer(modifier = Modifier.width(5.dp))
+
                                     Text(
                                         text = item.priority.toString(),
-                                        modifier = Modifier.padding(horizontal = 16.dp),
+                                        modifier = Modifier
+                                            .align(Alignment.CenterEnd),
                                         fontSize = 18.sp,
                                         textAlign = TextAlign.End
                                     )
@@ -882,9 +885,9 @@ class Screen {
             var textSeachName by remember { mutableStateOf(TextFieldValue()) }
             var searchName by remember { mutableStateOf("все") }
             var sum by remember { mutableStateOf(0) }
-            var title ="name"
+            var title = "name"
             val account = (accountsList.find { it.username == currentUsername })
-            if (account!= null) title =account.name
+            if (account != null) title = account.name
 
             var accountsListCard: MutableList<Account> = accountsList.toMutableList()
             Scaffold(
@@ -936,18 +939,18 @@ class Screen {
                         trailingIcon = {
                             // IconButton с иконкой лупы
                             IconButton(onClick = {
-                                if (searchName.equals("все"))
+                                if (searchName.equals("все")) {
                                     accountsListCard = accountsList.toMutableList()
-                                else {
+                                    Log.d("Doing", "все")
+                                } else {
+                                    Log.d("Doing", "$searchName")
                                     accountsListCard.clear()
-                                    CoroutineScope(Dispatchers.IO).launch {
-                                        val account = viewModel.findAccount(searchName)
-                                        if (account!=null)
-                                            accountsListCard.add(account)
-                                    }
+                                    for (i in accountsList)
+                                        if (i.name == searchName)
+                                            accountsListCard.add(i)
+
+                                    Log.d("Doing", "${accountsListCard[0]}")
                                 }
-
-
                             }) {
                                 Icon(Icons.Default.Search, contentDescription = "Search Icon")
                             }
@@ -961,42 +964,44 @@ class Screen {
                         itemsIndexed(
                             accountsListCard
                         ) { _, item ->
-
+                            Log.d("Doing", "$item")
                             for (it in achievementsList) {
                                 if (it.username == item.username) {
                                     sum += it.priority
                                 }
                             }
-                            Log.d("Doing","$sum")
 
-                            Row {
-                                Card(modifier = Modifier.weight(1f)) {
-                                    Row(
+                            Card(modifier = Modifier.weight(1f),
+                                onClick = {
+                                    student = item
+                                    navController.navigate("writeOffAchievementsScreen")
+                                }
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .padding(15.dp)
+                                        .fillMaxSize(),
+                                    contentAlignment = Alignment.CenterStart
+                                ) {
+                                    Text(
+                                        text = item.name,
                                         modifier = Modifier
-                                            .height(80.dp)
-                                            .padding(start = 15.dp, end = 15.dp),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Text(
-                                            text = item.name,
-                                            modifier = Modifier.padding(horizontal = 16.dp),
-                                            fontSize = 18.sp,
-                                            textAlign = TextAlign.Start,
-                                            maxLines = 1, // Ограничиваем количество строк
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                        Spacer(modifier = Modifier.weight(1f))
-                                        Spacer(modifier = Modifier.width(5.dp))
-                                        Text(
-                                            text = sum.toString(),
-                                            modifier = Modifier.padding(horizontal = 16.dp),
-                                            fontSize = 18.sp,
-                                            textAlign = TextAlign.End
-                                        )
-                                    }
+                                            .align(Alignment.CenterStart),
+                                        fontSize = 18.sp,
+                                        textAlign = TextAlign.Start,
+                                        softWrap = true,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    Text(
+                                        text = sum.toString(),
+                                        modifier = Modifier
+                                            .align(Alignment.CenterEnd),
+                                        fontSize = 18.sp,
+                                        textAlign = TextAlign.End
+                                    )
                                 }
                             }
+
                             Spacer(modifier = Modifier.height(8.dp))
                             sum = 0
                         }
@@ -1006,31 +1011,124 @@ class Screen {
                 }
             }
         }
+
+        @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+        @OptIn(ExperimentalMaterial3Api::class)
+        @Composable
+        fun WriteOffAchievementsScreen(
+            achievementsList: List<Achievement>
+        ) {
+            var sum = 0
+
+            Scaffold(
+                topBar = @Composable {
+                    TopAppBar(
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            titleContentColor = MaterialTheme.colorScheme.primary,
+                        ),
+                        title = {
+                            Text(
+                                student.name,
+                                color = Color.Black,
+                                maxLines = 1,
+                                modifier = Modifier.fillMaxWidth(),
+                                style = TextStyle(fontSize = 24.sp), textAlign = TextAlign.Center
+                            )
+
+                        }
+                    )
+                }
+            ) {
+                var achievementsListToUser = emptyList<Achievement>()
+                for (item in achievementsList) {
+                    if (item.username == student.username) {
+                        sum += item.priority
+                        achievementsListToUser += item
+                    }
+                }
+                val achievementMap = achievementsListToUser.associateWith { false }.toMutableMap()
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+
+                ) {
+                    LazyColumn(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp, vertical = 80.dp)
+                    ) {
+                        itemsIndexed(
+                            achievementsListToUser
+                        ) { _, item ->
+                            val checkedState = remember { mutableStateOf(false) }
+                            Row {
+                                Card(modifier = Modifier.weight(1f)) {
+                                    Box(
+                                        modifier = Modifier
+                                            .padding(15.dp)
+                                            .fillMaxSize(),
+                                        contentAlignment = Alignment.CenterStart
+                                    ) {
+                                        Row(
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            Text(
+                                                text = item.text,
+                                                modifier = Modifier.weight(1f),
+                                                fontSize = 18.sp,
+                                                textAlign = TextAlign.Start,
+                                                softWrap = true,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+
+                                            Text(
+                                                text = item.priority.toString(),
+                                                modifier = Modifier.padding(start = 8.dp),
+                                                fontSize = 18.sp,
+                                                textAlign = TextAlign.End
+                                            )
+                                        }
+                                    }
+                                }
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Checkbox(checked = checkedState.value,
+                                    onCheckedChange = {
+                                        checkedState.value = it
+                                        achievementMap.put(item, it)
+                                    }
+                                )
+
+                            }
+                            Spacer(modifier = Modifier.height(20.dp))
+                        }
+                    }
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = stringResource(R.string.yourSum, sum), // сделать sum LiveData
+                            modifier = Modifier.weight(1f),
+                            fontSize = 24.sp,
+                            textAlign = TextAlign.Start
+                        )
+                        Button(onClick = {
+                            val filteredList: List<Achievement> = achievementMap
+                                .filterValues { it }  // Фильтруем по значениям, оставляем только true
+                                .keys.toList()
+                            Log.d("Doing", "$filteredList")
+                        }) {
+                            Text(text = stringResource(R.string.write_it_off), fontSize = 24.sp)
+                        }
+                    }
+                }
+            }
+        }
     }
 }
-
-/*LazyColumn {
-                                        itemsIndexed(
-                                            achievementsListToUser
-                                        ) { _, achieve ->
-                                            Row {
-                                                Text(
-                                                    text = achieve.text,
-                                                    fontSize = 18.sp
-                                                )
-                                                Spacer(modifier = Modifier.weight(1f))
-                                                Spacer(modifier = Modifier.width(5.dp))
-                                                Text(
-                                                    text = achieve.priority.toString(),
-                                                    fontSize = 18.sp
-                                                )
-                                                Spacer(modifier = Modifier.width(5.dp))
-                                                Checkbox(
-                                                    checked = checked,
-                                                    onCheckedChange = {
-                                                        checked = it
-                                                    }
-                                                )
-                                            }
-
-                                        }*/
