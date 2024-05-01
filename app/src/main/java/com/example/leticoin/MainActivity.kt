@@ -26,6 +26,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var viewModel: MainViewModel
     private var accountsList: List<Account> = emptyList()
     private var achievementsList: List<Achievement> = emptyList()
+    private var nameAndTotalPriority: List<NameAndTotalPriority> = emptyList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
@@ -67,47 +68,27 @@ class MainActivity : ComponentActivity() {
                         Screen.AddAchievmentScreen(navController, viewModel)
                     }
                     composable("teacherScreen") {//teacher
-                        viewModel.getAchievements().observe(owner, Observer { achievements ->
-                            achievementsList = achievements
+                        viewModel.getNameAndPriority().observe(owner, Observer { nameAndPriority ->
+                            nameAndTotalPriority = nameAndPriority
                         })
                         viewModel.getAccounts().observe(owner, Observer { accounts ->
                             accountsList = accounts
                         })
                         Screen.TeacherScreen(navController,
-                            achievementsList,
-                        accountsList,
-                        viewModel)
+                            nameAndTotalPriority,accountsList,
+                            viewModel
+                        )
                     }
                     composable("writeOffAchievementsScreen") {
                         viewModel.getAchievements().observe(owner, Observer { achievements ->
                             achievementsList = achievements
                         })
-                    Screen.WriteOffAchievementsScreen(achievementsList)
+                    Screen.WriteOffAchievementsScreen(achievementsList, viewModel,navController)
                     }
                 }
-                //MainScreen(navController, viewModel,achievementsList,accountsList )
+
             }
         }
 
-    }
-}
-
-
-@Composable
-fun MainScreen(
-    navController: NavHostController,
-    viewModel: MainViewModel,
-    achievementsList: List<Achievement>,
-    accountsList: List<Account>
-) {
-
-}
-
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    LETICoinTheme {
-        //Screen.AchievementScreen()
     }
 }

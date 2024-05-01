@@ -13,6 +13,7 @@ import com.example.leticoin.achievements.Achievement
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import androidx.lifecycle.LiveData
+import kotlinx.coroutines.CoroutineScope
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val accountDao: AccountsDao = AppDatabase.getInstance(application).accountsDao()
@@ -30,19 +31,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun findAccount(username: String): Account? {
         val account = accountDao.searchAccount(username)
-
         return account
     }
 
-    fun findAchievement(username: String): Achievement? {
-        val achievement = achievementDao.searchAchievement(username)
-        return achievement
-    }
-
-
     fun saveAchievement(achievement: Achievement) {
-        Log.d("Doing", "Пришли в saveAchievement")
         achievementDao.add(achievement)
+    }
+    fun getNameAndPriority(): LiveData<List<NameAndTotalPriority>>{
+            return accountDao.getNameAndTotalPriority()
+
     }
 
     fun saveAccount(account: Account) {

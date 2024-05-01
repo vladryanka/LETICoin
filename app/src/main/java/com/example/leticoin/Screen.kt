@@ -82,6 +82,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextOverflow
 
+
 class Screen {
 
     @OptIn(ExperimentalMaterial3Api::class)
@@ -353,8 +354,8 @@ class Screen {
                     Log.d("Doing", "Мы создали экран регистрации")
                     Button(
                         onClick = {
-                            if (username.equals("") || name.equals("")
-                                || password.equals("") || reenteredPassword.equals("")
+                            if (username == "" || name == ""
+                                || password == "" || reenteredPassword == ""
                             ) {
                                 scope.launch {
                                     snackbarHostState.showSnackbar(
@@ -374,18 +375,33 @@ class Screen {
                                     }
                                 else {
                                     CoroutineScope(Dispatchers.IO).launch {
-                                        viewModel.saveAccount(
-                                            Account(
-                                                isTeacherSelected, username, password, name
+                                        if (viewModel.findAccount(username)!=null){
+                                            scope.launch {
+                                                snackbarHostState.showSnackbar(
+                                                    "Такой аккаунт уже существует",
+                                                    withDismissAction = true,
+                                                    duration = SnackbarDuration.Short
+                                                )
+                                            }
+                                        }
+                                        else {
+                                            viewModel.saveAccount(
+                                                Account(
+                                                    isTeacherSelected, username, password, name
+                                                )
                                             )
-                                        )
+                                            withContext(Dispatchers.Main){
+                                            navController.navigate("greetingScreen") {
+                                                popUpTo("greetingScreen") {
+                                                    inclusive = true
+                                                }
+                                            }
+                                            }
+                                        }
+
                                     }
 
-                                    navController.navigate("greetingScreen") {
-                                        popUpTo("greetingScreen") {
-                                            inclusive = true
-                                        }
-                                    }
+
                                 }
                             }
                         },
@@ -532,7 +548,7 @@ class Screen {
                                         }
                                     } else {
                                         currentUsername = account.username
-                                        if (account.teacher == true)
+                                        if (account.teacher)
                                             withContext(Dispatchers.Main) {
                                                 navController.navigate("teacherScreen") {
                                                     Log.d("Doing", "teacherScreen")
@@ -597,7 +613,7 @@ class Screen {
                     )
                 }
             ) {
-                var achievementsListToUser = emptyList<Achievement>()
+                val achievementsListToUser = emptyList<Achievement>().toMutableList()
                 for (item in achievementsList) {
                     if (item.username == currentUsername) {
                         sum += item.priority
@@ -839,11 +855,11 @@ class Screen {
                                     )
                                 }
                             } else {
-                                sum = if (achievementType.equals(suggestions[0]))
-                                    50
-                                else if (achievementType.equals(suggestions[1]))
-                                    20
-                                else 30
+                                sum = when (achievementType) {
+                                    suggestions[0] -> 50
+                                    suggestions[1] -> 20
+                                    else -> 30
+                                }
 
 
                                 CoroutineScope(Dispatchers.IO).launch {
@@ -873,23 +889,23 @@ class Screen {
         }
 
 
-        @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+        @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter",
+            "CoroutineCreationDuringComposition"
+        )
         @OptIn(ExperimentalMaterial3Api::class)
         @Composable
         fun TeacherScreen(
             navController: NavHostController,
-            achievementsList: List<Achievement>,
-            accountsList: List<Account>,
-            viewModel: MainViewModel
+            nameAndTotalPriority: List<NameAndTotalPriority>,
+            accountsList:List<Account>, viewModel: MainViewModel
         ) {
-            var textSeachName by remember { mutableStateOf(TextFieldValue()) }
-            var searchName by remember { mutableStateOf("все") }
-            var sum by remember { mutableStateOf(0) }
+            var textSearchName by remember { mutableStateOf(TextFieldValue()) }
+            var searchName by remember { mutableStateOf("") }
             var title = "name"
-            val account = (accountsList.find { it.username == currentUsername })
-            if (account != null) title = account.name
+            title = currentUsername
+            var cardsList = nameAndTotalPriority.toMutableList()
 
-            var accountsListCard: MutableList<Account> = accountsList.toMutableList()
+
             Scaffold(
                 topBar = @Composable {
                     TopAppBar(
@@ -922,9 +938,9 @@ class Screen {
                 )
                 {
                     TextField(
-                        value = textSeachName,
+                        value = textSearchName,
                         onValueChange = {
-                            textSeachName = it
+                            textSearchName = it
                             searchName = it.text.trim()
                         },
                         label = {
@@ -937,19 +953,22 @@ class Screen {
                             .fillMaxWidth()
                             .padding(8.dp),
                         trailingIcon = {
-                            // IconButton с иконкой лупы
                             IconButton(onClick = {
-                                if (searchName.equals("все")) {
-                                    accountsListCard = accountsList.toMutableList()
-                                    Log.d("Doing", "все")
+                                if (searchName.equals("")) {
+                                    cardsList = nameAndTotalPriority.toMutableList()
                                 } else {
-                                    Log.d("Doing", "$searchName")
-                                    accountsListCard.clear()
-                                    for (i in accountsList)
-                                        if (i.name == searchName)
-                                            accountsListCard.add(i)
-
-                                    Log.d("Doing", "${accountsListCard[0]}")
+                                    cardsList.clear()
+                                    if (nameAndTotalPriority.find {it.name == searchName}!=null)
+                                    {
+                                        cardsList.add(
+                                            nameAndTotalPriority.find {it.name == searchName}!!
+                                        )
+                                    }
+                                    if (cardsList.isEmpty())
+                                        cardsList.add(
+                                            NameAndTotalPriority(
+                                            "Не найдено", 0)
+                                        )
                                 }
                             }) {
                                 Icon(Icons.Default.Search, contentDescription = "Search Icon")
@@ -957,24 +976,24 @@ class Screen {
                         }
                     )
                     Spacer(modifier = Modifier.height(20.dp))
+
                     LazyColumn(
                         horizontalAlignment = Alignment.CenterHorizontally,
                     )
                     {
+
                         itemsIndexed(
-                            accountsListCard
+                            cardsList
                         ) { _, item ->
-                            Log.d("Doing", "$item")
-                            for (it in achievementsList) {
-                                if (it.username == item.username) {
-                                    sum += it.priority
-                                }
-                            }
 
                             Card(modifier = Modifier.weight(1f),
                                 onClick = {
-                                    student = item
-                                    navController.navigate("writeOffAchievementsScreen")
+                                    CoroutineScope(Dispatchers.IO).launch {
+                                        student = accountsList.find { it.name == item.name }!!
+                                            withContext(Dispatchers.Main) {
+                                                navController.navigate("writeOffAchievementsScreen")
+                                            }
+                                    }
                                 }
                             ) {
                                 Box(
@@ -993,7 +1012,7 @@ class Screen {
                                         overflow = TextOverflow.Ellipsis
                                     )
                                     Text(
-                                        text = sum.toString(),
+                                        text = item.total_priority.toString(),
                                         modifier = Modifier
                                             .align(Alignment.CenterEnd),
                                         fontSize = 18.sp,
@@ -1001,24 +1020,24 @@ class Screen {
                                     )
                                 }
                             }
-
                             Spacer(modifier = Modifier.height(8.dp))
-                            sum = 0
                         }
-
                     }
-
                 }
+
+
             }
         }
+
 
         @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
         @OptIn(ExperimentalMaterial3Api::class)
         @Composable
         fun WriteOffAchievementsScreen(
-            achievementsList: List<Achievement>
+            achievementsList: List<Achievement>,
+            viewModel: MainViewModel,
+            navController: NavHostController
         ) {
-            var sum = 0
 
             Scaffold(
                 topBar = @Composable {
@@ -1028,13 +1047,31 @@ class Screen {
                             titleContentColor = MaterialTheme.colorScheme.primary,
                         ),
                         title = {
-                            Text(
-                                student.name,
-                                color = Color.Black,
-                                maxLines = 1,
-                                modifier = Modifier.fillMaxWidth(),
-                                style = TextStyle(fontSize = 24.sp), textAlign = TextAlign.Center
-                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(1f)
+                            ) {
+                                Image(
+                                    painter = painterResource(R.drawable.backnew_image),
+                                    contentDescription = stringResource(
+                                        R.string.back
+                                    ), modifier = Modifier
+                                        .size(24.dp)
+                                        .clickable {
+                                            navController.navigate("teacherScreen") {
+                                                popUpTo("teacherScreen")
+                                            }
+                                        }
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    student.name,
+                                    color = Color.Black,
+                                    maxLines = 1,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    style = TextStyle(fontSize = 24.sp),
+                                    textAlign = TextAlign.Center
+                                )
+                            }
 
                         }
                     )
@@ -1043,7 +1080,6 @@ class Screen {
                 var achievementsListToUser = emptyList<Achievement>()
                 for (item in achievementsList) {
                     if (item.username == student.username) {
-                        sum += item.priority
                         achievementsListToUser += item
                     }
                 }
@@ -1051,16 +1087,13 @@ class Screen {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-
                 ) {
                     LazyColumn(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
                             .padding(horizontal = 16.dp, vertical = 80.dp)
                     ) {
-                        itemsIndexed(
-                            achievementsListToUser
-                        ) { _, item ->
+                        itemsIndexed(achievementsListToUser) { _, item ->
                             val checkedState = remember { mutableStateOf(false) }
                             Row {
                                 Card(modifier = Modifier.weight(1f)) {
@@ -1094,36 +1127,46 @@ class Screen {
                                     }
                                 }
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Checkbox(checked = checkedState.value,
+                                Checkbox(
+                                    checked = checkedState.value,
                                     onCheckedChange = {
                                         checkedState.value = it
-                                        achievementMap.put(item, it)
+                                        achievementMap[item] = it
                                     }
                                 )
-
                             }
                             Spacer(modifier = Modifier.height(20.dp))
                         }
                     }
 
-                    Column(
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    Box(
+                        contentAlignment = Alignment.Center,
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                            .padding(bottom = 16.dp)
+                            .align(Alignment.CenterHorizontally)
                     ) {
-                        Text(
-                            text = stringResource(R.string.yourSum, sum), // сделать sum LiveData
-                            modifier = Modifier.weight(1f),
-                            fontSize = 24.sp,
-                            textAlign = TextAlign.Start
-                        )
-                        Button(onClick = {
-                            val filteredList: List<Achievement> = achievementMap
-                                .filterValues { it }  // Фильтруем по значениям, оставляем только true
-                                .keys.toList()
-                            Log.d("Doing", "$filteredList")
-                        }) {
+                        Button(
+                            onClick = {
+                                val filteredList: List<Achievement> = achievementMap
+                                    .filterValues { it }  // Фильтруем по значениям, оставляем только true
+                                    .keys.toList()
+
+                                CoroutineScope(Dispatchers.IO).launch {
+                                    for (i in filteredList)
+                                        viewModel.remove(i)
+                                }
+
+                                navController.navigate("teacherScreen") {
+                                    popUpTo("teacherScreen") {
+                                        inclusive = true
+                                    }
+                                }
+
+                                Log.d("Doing", "$filteredList")
+                            }
+                        ) {
                             Text(text = stringResource(R.string.write_it_off), fontSize = 24.sp)
                         }
                     }
@@ -1132,3 +1175,4 @@ class Screen {
         }
     }
 }
+
