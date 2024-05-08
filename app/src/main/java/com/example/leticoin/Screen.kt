@@ -117,7 +117,7 @@ class Screen {
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.circuit_logo),
+                        painter = painterResource(id = R.drawable.bez_imeni2),
                         contentDescription = stringResource(
                             id = R.string.app_name
                         )
