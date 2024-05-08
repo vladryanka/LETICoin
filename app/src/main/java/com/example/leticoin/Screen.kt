@@ -117,7 +117,7 @@ class Screen {
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.logo),
+                        painter = painterResource(id = R.drawable.circuit_logo),
                         contentDescription = stringResource(
                             id = R.string.app_name
                         )
@@ -695,7 +695,7 @@ class Screen {
                         verticalAlignment = Alignment.Bottom // Выравниваем по нижнему краю
                     ) {
                         Text(
-                            text = stringResource(R.string.yourSum, sum), // сделать sum LiveData
+                            text = stringResource(R.string.yourSum, sum),
                             modifier = Modifier.weight(1f),
                             fontSize = 24.sp,
                             textAlign = TextAlign.Start
@@ -845,8 +845,8 @@ class Screen {
 
                     Button(
                         onClick = {
-                            var sum = 0
-                            if (achievementType.equals("") || achievementName.equals("")) {
+                            val sum:Int
+                            if (achievementType == "" || achievementName == "") {
                                 scope.launch {
                                     snackbarHostState.showSnackbar(
                                         "Заполните все поля",
@@ -897,12 +897,11 @@ class Screen {
         fun TeacherScreen(
             navController: NavHostController,
             nameAndTotalPriority: List<NameAndTotalPriority>,
-            accountsList:List<Account>, viewModel: MainViewModel
+            accountsList:List<Account>
         ) {
             var textSearchName by remember { mutableStateOf(TextFieldValue()) }
             var searchName by remember { mutableStateOf("") }
-            var title = "name"
-            title = currentUsername
+            val title: String= currentUsername
             var cardsList = nameAndTotalPriority.toMutableList()
 
 
@@ -954,7 +953,7 @@ class Screen {
                             .padding(8.dp),
                         trailingIcon = {
                             IconButton(onClick = {
-                                if (searchName.equals("")) {
+                                if (searchName == "") {
                                     cardsList = nameAndTotalPriority.toMutableList()
                                 } else {
                                     cardsList.clear()
@@ -1077,7 +1076,7 @@ class Screen {
                     )
                 }
             ) {
-                var achievementsListToUser = emptyList<Achievement>()
+                val achievementsListToUser = emptyList<Achievement>().toMutableList()
                 for (item in achievementsList) {
                     if (item.username == student.username) {
                         achievementsListToUser += item

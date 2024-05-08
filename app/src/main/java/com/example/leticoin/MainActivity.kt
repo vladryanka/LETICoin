@@ -1,24 +1,16 @@
 package com.example.leticoin
-
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.leticoin.ui.theme.LETICoinTheme
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.example.leticoin.accounts.Account
 import com.example.leticoin.achievements.Achievement
-
 
 class MainActivity : ComponentActivity() {
 
@@ -27,25 +19,20 @@ class MainActivity : ComponentActivity() {
     private var accountsList: List<Account> = emptyList()
     private var achievementsList: List<Achievement> = emptyList()
     private var nameAndTotalPriority: List<NameAndTotalPriority> = emptyList()
-
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
 
-        //viewModel = ViewModelProvider(this).get(MainViewModel::class.java)
         viewModel = ViewModelProvider(
             this, ViewModelProvider
                 .AndroidViewModelFactory.getInstance(application)
-        ).get(MainViewModel::class.java)
+        )[MainViewModel::class.java]
 
         setContent {
             LETICoinTheme {
-                //val appDatabase = AppDatabase.getInstance(this)
                 Log.d("Doing", "Идем дальше")
                 navController = rememberNavController()
                 val owner = this
-
-
 
                 NavHost(navController = navController, startDestination = "greetingScreen") {
                     composable("greetingScreen") {
@@ -59,36 +46,33 @@ class MainActivity : ComponentActivity() {
                         Screen.AuthorizationScreenGreeting(navController, viewModel)
                     }
                     composable("achievementScreen") {
-                        viewModel.getAchievements().observe(owner, Observer { achievements ->
+                        viewModel.getAchievements().observe(owner) { achievements ->
                             achievementsList = achievements
-                        })
+                        }
                         Screen.AchievementScreen(navController, achievementsList, viewModel)
                     }
                     composable("addAchievmentScreen") {
                         Screen.AddAchievmentScreen(navController, viewModel)
                     }
-                    composable("teacherScreen") {//teacher
-                        viewModel.getNameAndPriority().observe(owner, Observer { nameAndPriority ->
+                    composable("teacherScreen") {
+                        viewModel.getNameAndPriority().observe(owner) { nameAndPriority ->
                             nameAndTotalPriority = nameAndPriority
-                        })
-                        viewModel.getAccounts().observe(owner, Observer { accounts ->
+                        }
+                        viewModel.getAccounts().observe(owner) { accounts ->
                             accountsList = accounts
-                        })
+                        }
                         Screen.TeacherScreen(navController,
-                            nameAndTotalPriority,accountsList,
-                            viewModel
+                            nameAndTotalPriority,accountsList
                         )
                     }
                     composable("writeOffAchievementsScreen") {
-                        viewModel.getAchievements().observe(owner, Observer { achievements ->
+                        viewModel.getAchievements().observe(owner) { achievements ->
                             achievementsList = achievements
-                        })
-                    Screen.WriteOffAchievementsScreen(achievementsList, viewModel,navController)
+                        }
+                        Screen.WriteOffAchievementsScreen(achievementsList, viewModel,navController)
                     }
                 }
-
             }
         }
-
     }
 }

@@ -14,6 +14,7 @@ abstract class AppDatabase: RoomDatabase() {
     abstract fun accountsDao(): AccountsDao
     abstract fun achievementsDao(): AchievementsDao
 
+
     companion object{
         fun getInstance(context: Context): AppDatabase {
             return Room.databaseBuilder(

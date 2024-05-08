@@ -19,7 +19,7 @@
     <string name="add_achievement">Добавление достижения</string>
     <string name="enter_the_achievement">Введите название достижения</string>
     <string name="enter_the_student">Введите имя студента</string>
-    <string name="yourSum">Сумма: %s баллов\nСписать?</string>
+    <string name="yourSum">Сумма: %s баллов\n</string>
     <string name="olympics">Олимпиада</string>
     <string name="article">Статья</string>
     <string name="conference">Конференция</string>
