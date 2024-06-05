@@ -7,6 +7,8 @@ Android-Studio, Kotlin, Jetpack Compose, Material 3 , Koltin DSL, Room, kotlinx.
 <p align="center">
   <img src=" ![image](https://github.com/vladryanka/LETICoin/assets/75379439/62bff4d8-14a2-468f-9441-7681f4849c9c)" alt="Alt текст">
 </p>
+<p align="center">Ваш текст здесь</p>
+
 
 
 Архитектура
