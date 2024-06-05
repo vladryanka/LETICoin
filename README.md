@@ -1,11 +1,13 @@
-![image](https://github.com/vladryanka/LETICoin/assets/75379439/60f8abed-049b-47f7-b436-5e9e38898de7)Интеграция «ЛЭТИ-КОИНов» в образовательный процесс – концепция Балльно-рейтинговой системы
+Интеграция «ЛЭТИ-КОИНов» в образовательный процесс – концепция Балльно-рейтинговой системы
 
 
 
-\n
+
 Android-Studio, Kotlin, Jetpack Compose, Material 3 , Koltin DSL, Room, kotlinx.coroutines, MVVM
+<p align="center">
+  <img src=" ![image](https://github.com/vladryanka/LETICoin/assets/75379439/62bff4d8-14a2-468f-9441-7681f4849c9c)" alt="Alt текст">
+</p>
 
- ![image](https://github.com/vladryanka/LETICoin/assets/75379439/62bff4d8-14a2-468f-9441-7681f4849c9c)
 
 Архитектура
 ![image](https://github.com/vladryanka/LETICoin/assets/75379439/0148a23c-ca3d-4ca4-847a-50e347973b81)
